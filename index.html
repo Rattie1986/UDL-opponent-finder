@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UDL Opponent Finder</title>
+<meta name="description" content="Find and message your United Darts League opponents instantly. Search by name, filter by league, and connect via WhatsApp – updated live from our official player list.">
+<meta property="og:title" content="United Darts League — Opponent Finder">
+<meta property="og:description" content="Search, filter, and WhatsApp your UDL opponents instantly. Live list, always up-to-date.">
+<style>
+  :root { --brand-blue:#0057B8; --brand-red:#E10600; --bg:#f7f8fb; --card:#ffffff; --text:#1b1f24; --muted:#6b7280; --ring:rgba(0,87,184,0.15); }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+  header{display:flex;align-items:center;gap:12px;padding:18px 14px;background:#fff;border-bottom:3px solid var(--brand-blue);position:sticky;top:0;z-index:10}
+  header h1{margin:0;font-size:22px;font-weight:800}
+  header p{margin:2px 0 0;color:var(--muted);font-size:13px}
+  .container{max-width:980px;margin:24px auto 72px;padding:0 16px}
+  .controls{display:grid;grid-template-columns:1fr 220px;gap:12px;margin-bottom:14px}
+  .controls input,.controls select{border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;font-size:14px;background:#fff;outline:none}
+  .controls input:focus,.controls select:focus{border-color:var(--brand-blue);box-shadow:0 0 0 4px var(--ring)}
+  .table-wrap{background:var(--card);border-radius:14px;overflow:hidden;box-shadow: 0 6px 18px rgba(0,0,0,.05)}
+  table{width:100%;border-collapse:collapse}
+  thead th{background: var(--brand-blue);color:#fff;text-align:left;padding:12px 14px;font-weight:700;font-size:13px;letter-spacing:.3px}
+  tbody td{padding:12px 14px;border-top:1px solid #f1f3f5;vertical-align:middle}
+  tbody tr:hover{background:#fafcff}
+  .btn{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-weight:700;padding:9px 12px;border-radius:10px;background:var(--brand-red);color:#fff;opacity:1}
+  .btn[aria-disabled="true"]{background:#c7c9d1;color:#fff;pointer-events:none;opacity:.8}
+  .tag{display:inline-block;padding:4px 8px;border-radius:999px;font-size:12px;background:#eef2ff;color:var(--brand-blue);font-weight:700}
+  .muted{color: var(--muted)}
+  .footer{margin-top:16px;color:var(--muted);font-size:12px;text-align:center}
+  @media(max-width:640px){ .controls{grid-template-columns:1fr} thead{display:none} table,tbody,tr,td{display:block;width:100%} tbody tr{border-top:1px solid #f1f3f5;padding:10px 12px} tbody td{border:0;padding:6px 0} tbody td[data-label]::before{content:attr(data-label) ": ";font-weight:700;color:#111827;display:inline-block;width:auto} .btn{width:100%;justify-content:center;margin-top:8px} }
+</style>
+</head>
+<body>
+<header>
+  <div class="title">
+    <h1>United Darts League — Opponent Finder</h1>
+    <p>Search by name. WhatsApp buttons activate once numbers are added.</p>
+  </div>
+</header>
+
+<div class="container">
+  <div class="controls">
+    <input id="search" type="search" placeholder="Search player name…" aria-label="Search players">
+    <select id="leagueFilter" aria-label="Filter by league">
+      <option value="">All Leagues</option>
+    </select>
+  </div>
+
+  <div class="table-wrap">
+    <table id="playerTable">
+      <thead>
+        <tr><th>Player</th><th>League</th><th>WhatsApp</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <p class="footer">To enable a button, add an international number (e.g., 4479…) in the data.</p>
+</div>
+
+<script>
+const DEFAULT_COUNTRY_CODE="44";
+const PREFILL_MESSAGE="Hi, I'm your opponent from UDL. When can you play?";
+
+// Paste your players into PLAYERS below when ready:
+const PLAYERS = [
+  {"name":"Alex Tiger Gill","phone":"","league":""},
+  {"name":"Alexjrobo","phone":"","league":""},
+  {"name":"Angus8691","phone":"","league":""},
+  {"name":"BIGDAVE1905","phone":"","league":""},
+  {"name":"BLING82","phone":"","league":""},
+  {"name":"BOBRAKUS","phone":"","league":""},
+  {"name":"Brandone943","phone":"","league":""},
+  {"name":"Brendog89","phone":"","league":""},
+  {"name":"CHADB98","phone":"","league":""},
+  {"name":"CHILLY 180","phone":"","league":""},
+  {"name":"Christo79","phone":"","league":""},
+  {"name":"colm walsh","phone":"","league":""},
+  {"name":"conw08","phone":"","league":""},
+  {"name":"CRACKER DOOBY","phone":"","league":""},
+  {"name":"CraigL24","phone":"","league":""},
+  {"name":"Customflight.co","phone":"","league":""},
+  {"name":"Dannny deadeye jones","phone":"","league":""},
+  {"name":"Ddon91","phone":"","league":""},
+  {"name":"DevilDroll","phone":"","league":""},
+  {"name":"DICKO97X","phone":"","league":""},
+  {"name":"DOVESTER81","phone":"","league":""},
+  {"name":"Ellz93","phone":"","league":""},
+  {"name":"Etzawix","phone":"","league":""},
+  {"name":"FLYING BOBSTER","phone":"","league":""},
+  {"name":"flyscher","phone":"","league":""},
+  {"name":"Gavbrown1","phone":"","league":""},
+  {"name":"Gaz501","phone":"","league":""},
+  {"name":"Hullash95","phone":"","league":""},
+  {"name":"HurlingDarts","phone":"","league":""},
+  {"name":"Irish10X","phone":"","league":""},
+  {"name":"JAMIEBROON","phone":"","league":""},
+  {"name":"Jamiequizhost","phone":"","league":""},
+  {"name":"JONYMC","phone":"","league":""},
+  {"name":"KAYRIS","phone":"","league":""},
+  {"name":"Kevcheese","phone":"","league":""},
+  {"name":"Lewisc117","phone":"","league":""},
+  {"name":"LOVELLYJUBBLY VIDEO","phone":"","league":""},
+  {"name":"LUKE.","phone":"","league":""},
+  {"name":"Matt the mod","phone":"","league":""},
+  {"name":"MaxYeoman22","phone":"","league":""},
+  {"name":"MBURNS","phone":"","league":""},
+  {"name":"Moresmash","phone":"","league":""},
+  {"name":"MrBazz","phone":"","league":""},
+  {"name":"NEMO THE FISH","phone":"","league":""},
+  {"name":"Pickle_Rick","phone":"","league":""},
+  {"name":"PIPEY","phone":"","league":""},
+  {"name":"Rambo79","phone":"","league":""},
+  {"name":"Rattie JR","phone":"","league":""},
+  {"name":"Rene Nielsen","phone":"","league":""},
+  {"name":"riggy83","phone":"","league":""},
+  {"name":"Rileyse09","phone":"","league":""},
+  {"name":"Russboy","phone":"","league":""},
+  {"name":"ScallyGino","phone":"","league":""},
+  {"name":"Scottiboy88","phone":"","league":""},
+  {"name":"SEAN 'THE NIGHTMARE'","phone":"","league":""},
+  {"name":"Sebnig","phone":"","league":""},
+  {"name":"SIOTHESCORER","phone":"","league":""},
+  {"name":"SJSEARLE93UK","phone":"","league":""},
+  {"name":"Snipes0121","phone":"","league":""},
+  {"name":"SSK Phlip","phone":"","league":""},
+  {"name":"STEVEN SEAGULL","phone":"","league":""},
+  {"name":"TEDDYROLFE","phone":"","league":""},
+  {"name":"THE FLAT CAP","phone":"","league":""},
+  {"name":"THE TURNERNATER","phone":"","league":""},
+  {"name":"THE UNIT 180","phone":"","league":""},
+  {"name":"Tom38","phone":"","league":""},
+  {"name":"Wadestopford","phone":"","league":""},
+  {"name":"WOODIO","phone":"","league":""},
+  {"name":"Wynks","phone":"","league":""}
+];
+
+const onlyDigits=s=>(s||"").replace(/\D+/g,"");
+function normalizePhone(raw){
+  let d=(raw||"").trim(); d=onlyDigits(d); if(!d) return "";
+  if(d.startsWith("0044")) d=d.slice(2);
+  if(d.startsWith("0")) d=DEFAULT_COUNTRY_CODE + d.slice(1);
+  if(!d.startsWith("44") && d.length<=11) d=DEFAULT_COUNTRY_CODE + d;
+  return d;
+}
+function waLink(num){
+  const clean=normalizePhone(num); if(!clean) return "#";
+  const base="https://wa.me/"+clean;
+  return PREFILL_MESSAGE ? base+"?text="+encodeURIComponent(PREFILL_MESSAGE) : base;
+}
+
+const tbody=document.querySelector("#playerTable tbody");
+const search=document.getElementById("search");
+const leagueFilter=document.getElementById("leagueFilter");
+
+function leagueOptions(players){
+  const set=new Set(players.map(p=>(p.league||"").trim()).filter(Boolean));
+  [...set].sort().forEach(l=>{ const opt=document.createElement("option"); opt.value=l; opt.textContent=l; leagueFilter.appendChild(opt); });
+}
+
+function rowHTML(p){
+  const digits=normalizePhone(p.phone);
+  const display=digits? "+"+digits : "";
+  const disabled = digits ? "false" : "true";
+  return `
+  <tr>
+    <td data-label="Player"><strong>${p.name||""}</strong></td>
+    <td data-label="League"><span class="tag">${p.league||""}</span></td>
+    <td data-label="WhatsApp">
+      <a class="btn" aria-disabled="${disabled}" href="${digits?waLink(p.phone):'#'}" target="_blank" rel="noopener">${digits?'Message':'Add number'}</a>
+      <div class="muted" style="font-size:11px;margin-top:4px;">${display}</div>
+    </td>
+  </tr>`;
+}
+
+let ALL=[...PLAYERS];
+function render(){
+  const q=(search.value||"").toLowerCase().trim();
+  const l=(leagueFilter.value||"").toLowerCase().trim();
+  const rows=ALL
+    .filter(p=>!q||(p.name||"").toLowerCase().includes(q))
+    .filter(p=>!l||(p.league||"").toLowerCase()===l)
+    .sort((a,b)=>(a.name||"").localeCompare(b.name||""));
+  tbody.innerHTML=rows.map(rowHTML).join("\n");
+}
+
+search.addEventListener("input", render);
+leagueFilter.addEventListener("change", render);
+leagueOptions(ALL);
+render();
+</script>
+</body>
+</html>
